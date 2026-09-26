@@ -6,6 +6,8 @@ export const stocks = sqliteTable("stocks", {
   name: text("name").notNull(),
   ticker: text("ticker").notNull().default(""),
   targetWeight: real("target_weight").notNull().default(0),
+  quantity: integer("quantity").notNull().default(0),
+  averageCost: integer("average_cost").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 

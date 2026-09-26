@@ -29,7 +29,9 @@ export async function POST(request: Request) {
     const db = getDb();
     const ticker = String(body.ticker ?? "").trim();
     const [existing] = await db.select().from(stocks).where(eq(stocks.name, name)).limit(1);
-    const stock = existing ?? (await db.insert(stocks).values({ name, ticker, targetWeight: Number(body.targetWeight) || 0 }).returning())[0];
+    const stock = existing
+      ? (await db.update(stocks).set({ ticker, targetWeight: Number(body.targetWeight) || existing.targetWeight, quantity: Number(body.quantity) || existing.quantity, averageCost: Number(body.averageCost) || existing.averageCost }).where(eq(stocks.id, existing.id)).returning())[0]
+      : (await db.insert(stocks).values({ name, ticker, targetWeight: Number(body.targetWeight) || 0, quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0 }).returning())[0];
     const [entry] = await db.insert(journalEntries).values({
       stockId: stock.id, recordedAt: String(body.recordedAt ?? new Date().toISOString().slice(0, 10)),
       price: Number(body.price) || 0, roe: Number(body.roe) || 0, per: Number(body.per) || 0,
