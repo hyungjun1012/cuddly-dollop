@@ -1,0 +1,45 @@
+import { desc, eq } from "drizzle-orm";
+import { getDb } from "@/db";
+import { journalEntries, stocks } from "@/db/schema";
+
+function errorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "알 수 없는 오류";
+  return message.includes("no such table")
+    ? "일지 저장소를 준비 중입니다. 잠시 후 다시 시도해 주세요."
+    : message;
+}
+
+export async function GET() {
+  try {
+    const db = getDb();
+    const rows = await db.select({ entry: journalEntries, stock: stocks }).from(journalEntries)
+      .innerJoin(stocks, eq(journalEntries.stockId, stocks.id))
+      .orderBy(desc(journalEntries.recordedAt), desc(journalEntries.id));
+    return Response.json({ entries: rows.map(({ entry, stock }) => ({ ...entry, stock })) });
+  } catch (error) {
+    return Response.json({ error: errorMessage(error) }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = (await request.json()) as Record<string, unknown>;
+    const name = String(body.name ?? "").trim();
+    if (!name) return Response.json({ error: "종목명을 입력해 주세요." }, { status: 400 });
+    const db = getDb();
+    const ticker = String(body.ticker ?? "").trim();
+    const [existing] = await db.select().from(stocks).where(eq(stocks.name, name)).limit(1);
+    const stock = existing ?? (await db.insert(stocks).values({ name, ticker, targetWeight: Number(body.targetWeight) || 0 }).returning())[0];
+    const [entry] = await db.insert(journalEntries).values({
+      stockId: stock.id, recordedAt: String(body.recordedAt ?? new Date().toISOString().slice(0, 10)),
+      price: Number(body.price) || 0, roe: Number(body.roe) || 0, per: Number(body.per) || 0,
+      dividendYield: Number(body.dividendYield) || 0, shortComment: String(body.shortComment ?? "").trim(),
+      mindset: String(body.mindset ?? "").trim(), thesis: String(body.thesis ?? "").trim(),
+      riskPlan: String(body.riskPlan ?? "").trim(), review: String(body.review ?? "").trim(),
+      biases: JSON.stringify(Array.isArray(body.biases) ? body.biases : []),
+    }).returning();
+    return Response.json({ entry: { ...entry, stock } }, { status: 201 });
+  } catch (error) {
+    return Response.json({ error: errorMessage(error) }, { status: 500 });
+  }
+}
