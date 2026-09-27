@@ -8,6 +8,8 @@ export const stocks = sqliteTable("stocks", {
   targetWeight: real("target_weight").notNull().default(0),
   quantity: integer("quantity").notNull().default(0),
   averageCost: integer("average_cost").notNull().default(0),
+  status: text("status").notNull().default("watching"),
+  memo: text("memo").notNull().default(""),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 

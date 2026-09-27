@@ -15,6 +15,13 @@
       "when": 1790386070102,
       "tag": "0001_eminent_thaddeus_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790505002395,
+      "tag": "0002_low_the_hood",
+      "breakpoints": true
     }
   ]
 }

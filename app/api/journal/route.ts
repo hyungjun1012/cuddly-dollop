@@ -12,10 +12,11 @@ function errorMessage(error: unknown) {
 export async function GET() {
   try {
     const db = getDb();
+    const allStocks = await db.select().from(stocks).orderBy(desc(stocks.createdAt));
     const rows = await db.select({ entry: journalEntries, stock: stocks }).from(journalEntries)
       .innerJoin(stocks, eq(journalEntries.stockId, stocks.id))
       .orderBy(desc(journalEntries.recordedAt), desc(journalEntries.id));
-    return Response.json({ entries: rows.map(({ entry, stock }) => ({ ...entry, stock })) });
+    return Response.json({ stocks: allStocks, entries: rows.map(({ entry, stock }) => ({ ...entry, stock })) });
   } catch (error) {
     return Response.json({ error: errorMessage(error) }, { status: 500 });
   }
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     const [existing] = await db.select().from(stocks).where(eq(stocks.name, name)).limit(1);
     const stock = existing
       ? (await db.update(stocks).set({ ticker, targetWeight: Number(body.targetWeight) || existing.targetWeight, quantity: Number(body.quantity) || existing.quantity, averageCost: Number(body.averageCost) || existing.averageCost }).where(eq(stocks.id, existing.id)).returning())[0]
-      : (await db.insert(stocks).values({ name, ticker, targetWeight: Number(body.targetWeight) || 0, quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0 }).returning())[0];
+      : (await db.insert(stocks).values({ name, ticker, targetWeight: Number(body.targetWeight) || 0, quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0, status: "watching" }).returning())[0];
     const [entry] = await db.insert(journalEntries).values({
       stockId: stock.id, recordedAt: String(body.recordedAt ?? new Date().toISOString().slice(0, 10)),
       price: Number(body.price) || 0, roe: Number(body.roe) || 0, per: Number(body.per) || 0,

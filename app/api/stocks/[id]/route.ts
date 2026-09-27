@@ -10,7 +10,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!name) return Response.json({ error: "종목명을 입력해 주세요." }, { status: 400 });
     const [stock] = await getDb().update(stocks).set({
       name, ticker: String(body.ticker ?? "").trim(), targetWeight: Number(body.targetWeight) || 0,
-      quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0,
+      status: body.status === "holding" ? "holding" : "watching", memo: String(body.memo ?? "").trim(),
     }).where(eq(stocks.id, Number(id))).returning();
     if (!stock) return Response.json({ error: "종목을 찾을 수 없습니다." }, { status: 404 });
     return Response.json({ stock });
