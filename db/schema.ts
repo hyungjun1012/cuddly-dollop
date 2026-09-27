@@ -10,7 +10,16 @@ export const stocks = sqliteTable("stocks", {
   averageCost: integer("average_cost").notNull().default(0),
   status: text("status").notNull().default("watching"),
   memo: text("memo").notNull().default(""),
+  market: text("market").notNull().default("OTHER"),
+  sector: text("sector").notNull().default(""),
+  investmentStyle: text("investment_style").notNull().default("other"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const portfolioSettings = sqliteTable("portfolio_settings", {
+  id: integer("id").primaryKey(),
+  cash: integer("cash").notNull().default(0),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const journalEntries = sqliteTable("journal_entries", {

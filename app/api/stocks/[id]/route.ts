@@ -8,10 +8,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = (await request.json()) as Record<string, unknown>;
     const name = String(body.name ?? "").trim();
     if (!name) return Response.json({ error: "종목명을 입력해 주세요." }, { status: 400 });
-    const [stock] = await getDb().update(stocks).set({
+    const hasHoldingFields = Object.hasOwn(body, "quantity") || Object.hasOwn(body, "averageCost");
+    const update = {
       name, ticker: String(body.ticker ?? "").trim(), targetWeight: Number(body.targetWeight) || 0,
       status: body.status === "holding" ? "holding" : "watching", memo: String(body.memo ?? "").trim(),
-    }).where(eq(stocks.id, Number(id))).returning();
+      market: ["KOSPI", "KOSDAQ", "OTHER"].includes(String(body.market)) ? String(body.market) : "OTHER",
+      sector: String(body.sector ?? "").trim(), investmentStyle: String(body.investmentStyle ?? "other").trim(),
+      ...(hasHoldingFields ? { quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0 } : {}),
+    };
+    const [stock] = await getDb().update(stocks).set(update).where(eq(stocks.id, Number(id))).returning();
     if (!stock) return Response.json({ error: "종목을 찾을 수 없습니다." }, { status: 404 });
     return Response.json({ stock });
   } catch (error) {

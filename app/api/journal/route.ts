@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { journalEntries, stocks } from "@/db/schema";
+import { journalEntries, portfolioSettings, stocks } from "@/db/schema";
 
 function errorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : "알 수 없는 오류";
@@ -13,10 +13,11 @@ export async function GET() {
   try {
     const db = getDb();
     const allStocks = await db.select().from(stocks).orderBy(desc(stocks.createdAt));
+    const [portfolio] = await db.select().from(portfolioSettings).limit(1);
     const rows = await db.select({ entry: journalEntries, stock: stocks }).from(journalEntries)
       .innerJoin(stocks, eq(journalEntries.stockId, stocks.id))
       .orderBy(desc(journalEntries.recordedAt), desc(journalEntries.id));
-    return Response.json({ stocks: allStocks, entries: rows.map(({ entry, stock }) => ({ ...entry, stock })) });
+    return Response.json({ portfolio: portfolio ?? { cash: 0 }, stocks: allStocks, entries: rows.map(({ entry, stock }) => ({ ...entry, stock })) });
   } catch (error) {
     return Response.json({ error: errorMessage(error) }, { status: 500 });
   }

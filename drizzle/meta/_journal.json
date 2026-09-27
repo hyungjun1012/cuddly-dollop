@@ -22,6 +22,13 @@
       "when": 1790505002395,
       "tag": "0002_low_the_hood",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790505964851,
+      "tag": "0003_soft_molecule_man",
+      "breakpoints": true
     }
   ]
 }
