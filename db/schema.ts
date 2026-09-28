@@ -42,3 +42,13 @@ export const journalEntries = sqliteTable("journal_entries", {
   biases: text("biases").notNull().default("[]"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const journalDocuments = sqliteTable("journal_documents", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  journalEntryId: integer("journal_entry_id").notNull().references(() => journalEntries.id),
+  objectKey: text("object_key").notNull(),
+  fileName: text("file_name").notNull(),
+  contentType: text("content_type").notNull().default("application/octet-stream"),
+  size: integer("size").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
