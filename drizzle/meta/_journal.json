@@ -36,6 +36,13 @@
       "when": 1790560471891,
       "tag": "0004_huge_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1790562132091,
+      "tag": "0005_eager_earthquake",
+      "breakpoints": true
     }
   ]
 }

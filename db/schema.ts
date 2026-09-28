@@ -22,6 +22,7 @@ export const portfolioSettings = sqliteTable("portfolio_settings", {
   cash: integer("cash").notNull().default(0),
   cashKrw: integer("cash_krw").notNull().default(0),
   cashUsd: integer("cash_usd").notNull().default(0),
+  exchangeRate: real("exchange_rate").notNull().default(1400),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 

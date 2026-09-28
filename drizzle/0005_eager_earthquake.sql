@@ -1,0 +1,1 @@
+ALTER TABLE `portfolio_settings` ADD `exchange_rate` real DEFAULT 1400 NOT NULL;
