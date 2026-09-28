@@ -31,6 +31,7 @@ export const journalEntries = sqliteTable("journal_entries", {
   stockId: integer("stock_id").notNull().references(() => stocks.id),
   recordedAt: text("recorded_at").notNull(),
   price: integer("price").notNull().default(0),
+  priceCurrency: text("price_currency").notNull().default("KRW"),
   roe: real("roe").notNull().default(0),
   per: real("per").notNull().default(0),
   dividendYield: real("dividend_yield").notNull().default(0),

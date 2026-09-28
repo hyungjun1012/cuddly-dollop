@@ -1,0 +1,1 @@
+ALTER TABLE `journal_entries` ADD `price_currency` text DEFAULT 'KRW' NOT NULL;

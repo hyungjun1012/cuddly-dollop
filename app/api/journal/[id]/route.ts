@@ -9,6 +9,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const [entry] = await getDb().update(journalEntries).set({
       recordedAt: String(body.recordedAt ?? ""),
       price: Number(body.price) || 0,
+      priceCurrency: body.priceCurrency === "USD" ? "USD" : "KRW",
       roe: Number(body.roe) || 0,
       per: Number(body.per) || 0,
       dividendYield: Number(body.dividendYield) || 0,
