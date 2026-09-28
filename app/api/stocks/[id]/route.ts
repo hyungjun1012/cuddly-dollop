@@ -14,6 +14,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       status: body.status === "holding" ? "holding" : "watching", memo: String(body.memo ?? "").trim(),
       market: ["KOSPI", "KOSDAQ", "OTHER"].includes(String(body.market)) ? String(body.market) : "OTHER",
       sector: String(body.sector ?? "").trim(), investmentStyle: String(body.investmentStyle ?? "other").trim(),
+      currency: body.currency === "USD" ? "USD" : "KRW",
       ...(hasHoldingFields ? { quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0 } : {}),
     };
     const [stock] = await getDb().update(stocks).set(update).where(eq(stocks.id, Number(id))).returning();

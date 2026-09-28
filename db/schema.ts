@@ -13,12 +13,15 @@ export const stocks = sqliteTable("stocks", {
   market: text("market").notNull().default("OTHER"),
   sector: text("sector").notNull().default(""),
   investmentStyle: text("investment_style").notNull().default("other"),
+  currency: text("currency").notNull().default("KRW"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const portfolioSettings = sqliteTable("portfolio_settings", {
   id: integer("id").primaryKey(),
   cash: integer("cash").notNull().default(0),
+  cashKrw: integer("cash_krw").notNull().default(0),
+  cashUsd: integer("cash_usd").notNull().default(0),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 

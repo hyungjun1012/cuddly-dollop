@@ -20,6 +20,7 @@ export async function POST(request: Request) {
       status: body.status === "holding" ? "holding" : "watching", memo: String(body.memo ?? "").trim(),
       market: ["KOSPI", "KOSDAQ", "OTHER"].includes(String(body.market)) ? String(body.market) : "OTHER",
       sector: String(body.sector ?? "").trim(), investmentStyle: String(body.investmentStyle ?? "other").trim(),
+      currency: body.currency === "USD" ? "USD" : "KRW",
     }).returning();
     return Response.json({ stock }, { status: 201 });
   } catch (error) {
