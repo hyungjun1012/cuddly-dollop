@@ -29,6 +29,7 @@ export const portfolioSettings = sqliteTable("portfolio_settings", {
 export const journalEntries = sqliteTable("journal_entries", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   stockId: integer("stock_id").notNull().references(() => stocks.id),
+  recordType: text("record_type").notNull().default("update"),
   recordedAt: text("recorded_at").notNull(),
   price: integer("price").notNull().default(0),
   priceCurrency: text("price_currency").notNull().default("KRW"),

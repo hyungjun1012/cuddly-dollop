@@ -57,6 +57,13 @@
       "when": 1790565345510,
       "tag": "0007_easy_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790672063420,
+      "tag": "0008_aromatic_shatterstar",
+      "breakpoints": true
     }
   ]
 }

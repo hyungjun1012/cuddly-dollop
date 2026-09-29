@@ -36,8 +36,9 @@ export async function POST(request: Request) {
     const stock = existing
       ? (await db.update(stocks).set({ ticker, currency: priceCurrency, targetWeight: Number(body.targetWeight) || existing.targetWeight, quantity: Number(body.quantity) || existing.quantity, averageCost: Number(body.averageCost) || existing.averageCost }).where(eq(stocks.id, existing.id)).returning())[0]
       : (await db.insert(stocks).values({ name, ticker, currency: priceCurrency, targetWeight: Number(body.targetWeight) || 0, quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0, status: "watching" }).returning())[0];
+    const priorEntries = await db.select({ id: journalEntries.id }).from(journalEntries).where(eq(journalEntries.stockId, stock.id)).limit(1);
     const [entry] = await db.insert(journalEntries).values({
-      stockId: stock.id, recordedAt: String(body.recordedAt ?? new Date().toISOString().slice(0, 10)),
+      stockId: stock.id, recordType: priorEntries.length ? "update" : "initial", recordedAt: String(body.recordedAt ?? new Date().toISOString().slice(0, 10)),
       price: Number(body.price) || 0, priceCurrency, roe: Number(body.roe) || 0, per: Number(body.per) || 0,
       dividendYield: Number(body.dividendYield) || 0, shortComment: String(body.shortComment ?? "").trim(),
       mindset: String(body.mindset ?? "").trim(), thesis: String(body.thesis ?? "").trim(),
