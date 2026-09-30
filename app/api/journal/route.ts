@@ -18,7 +18,7 @@ export async function GET() {
     const rows = await db.select({ entry: journalEntries, stock: stocks }).from(journalEntries)
       .innerJoin(stocks, eq(journalEntries.stockId, stocks.id))
       .orderBy(desc(journalEntries.recordedAt), desc(journalEntries.id));
-    return Response.json({ portfolio: portfolio ?? { cash: 0, cashKrw: 0, cashUsd: 0, exchangeRate: 1400 }, stocks: allStocks, entries: rows.map(({ entry, stock }) => ({ ...entry, stock, documents: documents.filter(document => document.journalEntryId === entry.id) })) });
+    return Response.json({ portfolio: portfolio ?? { cash: 0, cashKrw: 0, cashUsd: 0, exchangeRate: 1400, initialSetupCompleted: false }, stocks: allStocks, entries: rows.map(({ entry, stock }) => ({ ...entry, stock, documents: documents.filter(document => document.journalEntryId === entry.id) })) });
   } catch (error) {
     return Response.json({ error: errorMessage(error) }, { status: 500 });
   }
