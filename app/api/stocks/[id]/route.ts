@@ -15,7 +15,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       market: ["KOSPI", "KOSDAQ", "OTHER"].includes(String(body.market)) ? String(body.market) : "OTHER",
       sector: String(body.sector ?? "").trim(), investmentStyle: String(body.investmentStyle ?? "other").trim(),
       currency: body.currency === "USD" ? "USD" : "KRW",
-      ...(hasHoldingFields ? { quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0, holdingStartedAt: Number(body.quantity) > 0 ? String(body.holdingStartedAt ?? new Date().toISOString().slice(0, 10)) : null } : {}),
+      ...(hasHoldingFields ? { quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0, holdingStartedAt: Number(body.quantity) > 0 ? String(body.holdingStartedAt ?? new Date().toISOString().slice(0, 10)) : null, ...(body.initialPosition === true ? { initialQuantity: Number(body.quantity) || 0, initialAverageCost: Number(body.averageCost) || 0 } : {}) } : {}),
     };
     const [stock] = await getDb().update(stocks).set(update).where(eq(stocks.id, Number(id))).returning();
     if (!stock) return Response.json({ error: "종목을 찾을 수 없습니다." }, { status: 404 });
