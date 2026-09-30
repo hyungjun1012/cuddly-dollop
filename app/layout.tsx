@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "내 몸 밖의 생각 | 매매일지",
-  description: "심리, 가설, 리스크를 시점별로 쌓아가는 개인 매매일지.",
+  title: "가치가치 | 투자 기록",
+  description: "생각, 근거, 리스크를 시점별로 쌓아가는 개인 투자 기록.",
   other: {
     "codex-preview": "development",
   },
