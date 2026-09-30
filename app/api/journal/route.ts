@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     const priceCurrency = body.priceCurrency === "USD" ? "USD" : "KRW";
     const [existing] = await db.select().from(stocks).where(eq(stocks.name, name)).limit(1);
     const stock = existing
-      ? (await db.update(stocks).set({ ticker, currency: priceCurrency, targetWeight: Number(body.targetWeight) || existing.targetWeight, quantity: Number(body.quantity) || existing.quantity, averageCost: Number(body.averageCost) || existing.averageCost }).where(eq(stocks.id, existing.id)).returning())[0]
+      ? (await db.update(stocks).set({ ticker, targetWeight: Number(body.targetWeight) || existing.targetWeight, quantity: Number(body.quantity) || existing.quantity, averageCost: Number(body.averageCost) || existing.averageCost }).where(eq(stocks.id, existing.id)).returning())[0]
       : (await db.insert(stocks).values({ name, ticker, currency: priceCurrency, targetWeight: Number(body.targetWeight) || 0, quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0, status: "watching" }).returning())[0];
     const priorEntries = await db.select({ id: journalEntries.id }).from(journalEntries).where(eq(journalEntries.stockId, stock.id)).limit(1);
     const [entry] = await db.insert(journalEntries).values({
