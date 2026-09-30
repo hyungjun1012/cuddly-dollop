@@ -14,6 +14,7 @@ export const stocks = sqliteTable("stocks", {
   sector: text("sector").notNull().default(""),
   investmentStyle: text("investment_style").notNull().default("other"),
   currency: text("currency").notNull().default("KRW"),
+  holdingStartedAt: text("holding_started_at"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -35,6 +36,7 @@ export const journalEntries = sqliteTable("journal_entries", {
   tradeSide: text("trade_side").notNull().default(""),
   tradeQuantity: integer("trade_quantity").notNull().default(0),
   tradePrice: real("trade_price").notNull().default(0),
+  holdingDays: integer("holding_days").notNull().default(0),
   recordedAt: text("recorded_at").notNull(),
   price: integer("price").notNull().default(0),
   priceCurrency: text("price_currency").notNull().default("KRW"),
