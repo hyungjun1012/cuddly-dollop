@@ -1,9 +1,11 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { journalEntries, portfolioSettings, stocks } from "@/db/schema";
+import { journalEntries, stocks, userPortfolios } from "@/db/schema";
+import { requireApiUser } from "@/lib/api-user";
 
 export async function POST(request: Request) {
   try {
+    const user = await requireApiUser(); if (user instanceof Response) return user;
     const body = (await request.json()) as Record<string, unknown>;
     const stockId = Number(body.stockId);
     const side = body.side === "sell" ? "sell" : "buy";
@@ -14,9 +16,9 @@ export async function POST(request: Request) {
     }
 
     const db = getDb();
-    const [portfolio] = await db.select().from(portfolioSettings).limit(1);
+    const [portfolio] = await db.select().from(userPortfolios).where(eq(userPortfolios.ownerId, user.userId)).limit(1);
     if (!portfolio?.initialSetupCompleted) return Response.json({ error: "먼저 포트폴리오 초기 설정을 확정해 주세요." }, { status: 409 });
-    const [stock] = await db.select().from(stocks).where(eq(stocks.id, stockId)).limit(1);
+    const [stock] = await db.select().from(stocks).where(and(eq(stocks.id, stockId), eq(stocks.ownerId, user.userId))).limit(1);
     if (!stock) return Response.json({ error: "종목을 찾을 수 없습니다." }, { status: 404 });
     if (side === "sell" && quantity > stock.quantity) {
       return Response.json({ error: `보유 수량(${stock.quantity}주)보다 많이 매도할 수 없습니다.` }, { status: 400 });
@@ -43,12 +45,13 @@ export async function POST(request: Request) {
       holdingStartedAt,
     }).where(eq(stocks.id, stock.id)).returning();
     const nextCash = side === "buy" ? availableCash - amount : availableCash + amount;
-    await db.update(portfolioSettings).set(currency === "USD"
+    await db.update(userPortfolios).set(currency === "USD"
       ? { cashUsd: nextCash }
-      : { cash: nextCash, cashKrw: nextCash }).where(eq(portfolioSettings.id, portfolio.id));
+      : { cash: nextCash, cashKrw: nextCash }).where(eq(userPortfolios.id, portfolio.id));
 
-    const previous = await db.select({ id: journalEntries.id }).from(journalEntries).where(eq(journalEntries.stockId, stock.id)).limit(1);
+    const previous = await db.select({ id: journalEntries.id }).from(journalEntries).where(and(eq(journalEntries.stockId, stock.id), eq(journalEntries.ownerId, user.userId))).limit(1);
     const [entry] = await db.insert(journalEntries).values({
+      ownerId: user.userId,
       stockId: stock.id,
       recordType: previous.length ? "update" : "initial",
       entryKind: "trade",

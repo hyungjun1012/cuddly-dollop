@@ -1,9 +1,11 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { stocks } from "@/db/schema";
+import { requireApiUser } from "@/lib/api-user";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await requireApiUser(); if (user instanceof Response) return user;
     const { id } = await params;
     const body = (await request.json()) as Record<string, unknown>;
     const name = String(body.name ?? "").trim();
@@ -19,7 +21,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ...(hasHoldingFields ? { quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0, holdingStartedAt: Number(body.quantity) > 0 ? String(body.holdingStartedAt ?? new Date().toISOString().slice(0, 10)) : null } : {}),
       ...(hasInitialPositionFields ? { initialQuantity: Number(body.initialQuantity ?? body.quantity) || 0, initialAverageCost: Number(body.initialAverageCost ?? body.averageCost) || 0 } : {}),
     };
-    const [stock] = await getDb().update(stocks).set(update).where(eq(stocks.id, Number(id))).returning();
+    const [stock] = await getDb().update(stocks).set(update).where(and(eq(stocks.id, Number(id)), eq(stocks.ownerId, user.userId))).returning();
     if (!stock) return Response.json({ error: "종목을 찾을 수 없습니다." }, { status: 404 });
     return Response.json({ stock });
   } catch (error) {

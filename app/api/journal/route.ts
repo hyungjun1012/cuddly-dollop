@@ -1,6 +1,7 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { journalDocuments, journalEntries, portfolioSettings, stocks } from "@/db/schema";
+import { journalDocuments, journalEntries, stocks, userPortfolios } from "@/db/schema";
+import { requireApiUser } from "@/lib/api-user";
 
 function errorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : "알 수 없는 오류";
@@ -11,12 +12,14 @@ function errorMessage(error: unknown) {
 
 export async function GET() {
   try {
+    const user = await requireApiUser(); if (user instanceof Response) return user;
     const db = getDb();
-    const allStocks = await db.select().from(stocks).orderBy(desc(stocks.createdAt));
-    const [portfolio] = await db.select().from(portfolioSettings).limit(1);
-    const documents = await db.select().from(journalDocuments);
+    const allStocks = await db.select().from(stocks).where(eq(stocks.ownerId, user.userId)).orderBy(desc(stocks.createdAt));
+    const [portfolio] = await db.select().from(userPortfolios).where(eq(userPortfolios.ownerId, user.userId)).limit(1);
+    const documents = await db.select().from(journalDocuments).where(eq(journalDocuments.ownerId, user.userId));
     const rows = await db.select({ entry: journalEntries, stock: stocks }).from(journalEntries)
       .innerJoin(stocks, eq(journalEntries.stockId, stocks.id))
+      .where(and(eq(journalEntries.ownerId, user.userId), eq(stocks.ownerId, user.userId)))
       .orderBy(desc(journalEntries.recordedAt), desc(journalEntries.id));
     return Response.json({ portfolio: portfolio ?? { cash: 0, cashKrw: 0, cashUsd: 0, exchangeRate: 1400, initialSetupCompleted: false }, stocks: allStocks, entries: rows.map(({ entry, stock }) => ({ ...entry, stock, documents: documents.filter(document => document.journalEntryId === entry.id) })) });
   } catch (error) {
@@ -26,19 +29,20 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await requireApiUser(); if (user instanceof Response) return user;
     const body = (await request.json()) as Record<string, unknown>;
     const name = String(body.name ?? "").trim();
     if (!name) return Response.json({ error: "종목명을 입력해 주세요." }, { status: 400 });
     const db = getDb();
     const ticker = String(body.ticker ?? "").trim();
     const priceCurrency = body.priceCurrency === "USD" ? "USD" : "KRW";
-    const [existing] = await db.select().from(stocks).where(eq(stocks.name, name)).limit(1);
+    const [existing] = await db.select().from(stocks).where(and(eq(stocks.name, name), eq(stocks.ownerId, user.userId))).limit(1);
     const stock = existing
       ? (await db.update(stocks).set({ ticker, targetWeight: Number(body.targetWeight) || existing.targetWeight, quantity: Number(body.quantity) || existing.quantity, averageCost: Number(body.averageCost) || existing.averageCost }).where(eq(stocks.id, existing.id)).returning())[0]
-      : (await db.insert(stocks).values({ name, ticker, currency: priceCurrency, targetWeight: Number(body.targetWeight) || 0, quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0, status: "watching" }).returning())[0];
-    const priorEntries = await db.select({ id: journalEntries.id }).from(journalEntries).where(eq(journalEntries.stockId, stock.id)).limit(1);
+      : (await db.insert(stocks).values({ ownerId: user.userId, name, ticker, currency: priceCurrency, targetWeight: Number(body.targetWeight) || 0, quantity: Number(body.quantity) || 0, averageCost: Number(body.averageCost) || 0, status: "watching" }).returning())[0];
+    const priorEntries = await db.select({ id: journalEntries.id }).from(journalEntries).where(and(eq(journalEntries.stockId, stock.id), eq(journalEntries.ownerId, user.userId))).limit(1);
     const [entry] = await db.insert(journalEntries).values({
-      stockId: stock.id, recordType: priorEntries.length ? "update" : "initial", recordedAt: String(body.recordedAt ?? new Date().toISOString().slice(0, 10)),
+      ownerId: user.userId, stockId: stock.id, recordType: priorEntries.length ? "update" : "initial", recordedAt: String(body.recordedAt ?? new Date().toISOString().slice(0, 10)),
       price: Number(body.price) || 0, priceCurrency, roe: Number(body.roe) || 0, per: Number(body.per) || 0,
       dividendYield: Number(body.dividendYield) || 0, shortComment: String(body.shortComment ?? "").trim(),
       mindset: String(body.mindset ?? "").trim(), thesis: String(body.thesis ?? "").trim(),

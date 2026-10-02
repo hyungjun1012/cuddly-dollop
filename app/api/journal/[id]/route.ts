@@ -1,9 +1,11 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { journalEntries } from "@/db/schema";
+import { requireApiUser } from "@/lib/api-user";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const user = await requireApiUser(); if (user instanceof Response) return user;
     const { id } = await params;
     const body = (await request.json()) as Record<string, unknown>;
     const [entry] = await getDb().update(journalEntries).set({
@@ -19,7 +21,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       riskPlan: String(body.riskPlan ?? "").trim(),
       review: String(body.review ?? "").trim(),
       biases: JSON.stringify(Array.isArray(body.biases) ? body.biases : []),
-    }).where(eq(journalEntries.id, Number(id))).returning();
+    }).where(and(eq(journalEntries.id, Number(id)), eq(journalEntries.ownerId, user.userId))).returning();
     if (!entry) return Response.json({ error: "기록을 찾을 수 없습니다." }, { status: 404 });
     return Response.json({ entry });
   } catch (error) {
