@@ -3,6 +3,10 @@ import { getChatGPTUser } from "@/app/chatgpt-auth";
 import { getDb } from "@/db";
 import { journalDocuments, journalEntries, portfolioSettings, stocks, userPortfolios } from "@/db/schema";
 
+// The site was originally a private, single-owner journal. Keep that legacy
+// data claimable only by its owner after the site becomes public.
+const LEGACY_OWNER_EMAIL = "woosung.kwon0@gmail.com";
+
 export async function GET() {
   const user = await getChatGPTUser();
   if (!user) return Response.json({ error: "로그인이 필요합니다." }, { status: 401 });
@@ -15,7 +19,7 @@ export async function GET() {
     let claimedLegacy = false;
 
     // This runs while the existing private owner opens the upgraded site, before public access is enabled.
-    if (!ownPortfolio && (legacyStock || legacyPortfolio)) {
+    if (!ownPortfolio && (legacyStock || legacyPortfolio) && user.email.toLowerCase() === LEGACY_OWNER_EMAIL) {
       await db.update(stocks).set({ ownerId: user.userId }).where(eq(stocks.ownerId, ""));
       await db.update(journalEntries).set({ ownerId: user.userId }).where(eq(journalEntries.ownerId, ""));
       await db.update(journalDocuments).set({ ownerId: user.userId }).where(eq(journalDocuments.ownerId, ""));
